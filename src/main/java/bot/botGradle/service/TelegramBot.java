@@ -32,6 +32,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     final BotConfig config;
     Keyboards keyboard = new Keyboards();
     String language, word, choose;
+    int wordId;
     @Autowired
     private UserRepository userRepository;
     @Autowired
@@ -64,13 +65,11 @@ public class TelegramBot extends TelegramLongPollingBot {
                 case "/dict" -> {
                     userRepository.updateUserChooseByChatId(DICT, chatId);
                     dict(chatId);
-//                    choose = DICT;
                 }
                 case "/help" -> prepareAndSendMessage(chatId, HELP_TEXT);
                 case "/learn" -> {
                     userRepository.updateUserChooseByChatId(LEARN, chatId);
                     learn(chatId);
-//                    choose = LEARN;
                 }
                 default -> {
                     choose = userRepository.findUserDataByChatId(chatId).getUserChoose();
@@ -113,7 +112,19 @@ public class TelegramBot extends TelegramLongPollingBot {
                     findAllTranslates(word, chatId);
                 }
                 case BACK -> back(chatId);
+                case COUNT -> resetCounter(chatId);
             }
+        }
+    }
+
+    private void resetCounter(long chatId) {
+        language = userRepository.findUserDataByChatId(chatId).getUserLanguage();
+        if(language.equals(RU)){
+            wordsRepository.updateCountWordRuByChatId();
+            back(chatId);
+        }else {
+            wordsRepository.updateCountWordEnByChatId();
+            back(chatId);
         }
     }
 
@@ -157,15 +168,31 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void findRandomWord(long chatId) {
-        Words text = wordsRepository.findRandomWord();
+
         language = userRepository.findUserDataByChatId(chatId).getUserLanguage();
+        String textSend;
+
         if (language.equals(RU)) {
-            word = text.getWordRu();
+            Words text = wordsRepository.findRandomWordRu();
+            if(text == null){
+                executeMessageTextAddKeyboard(ALL_DONE, chatId, "count");
+                return;
+            }else {
+                wordId = text.getId();
+                word = text.getWordRu();
+            }
         } else if (language.equals(EN)) {
-            word = text.getWordEn();
+            Words text = wordsRepository.findRandomWordEn();
+            if(text == null) {
+                executeMessageTextAddKeyboard(ALL_DONE, chatId, "count");
+                return;
+            }else {
+                wordId = text.getId();
+                word = text.getWordEn();
+            }
         }
         userRepository.updateUserLastWordByChatId(word, chatId);
-        String textSend = "Твой вариант перевода слова <b>" + word + "</b>:";
+        textSend = "Твой вариант перевода слова <b>" + word + "</b>:";
 
         executeMessageText(textSend, chatId);
     }
@@ -187,7 +214,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
             if (flag) {
-                textSend = ANSWER_RIGHT;
+                int count = wordsRepository.findCountWordEnByChatId(wordId) + 1;
+                if(count <= 5){
+                    wordsRepository.updateCountWordEnByChatId(count, wordId);
+                    textSend = ANSWER_RIGHT;
+                }else {
+                    textSend = ALL_DONE;
+                }
             } else {
                 textSend = ANSWER_WRONG;
             }
@@ -201,7 +234,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
             }
             if (flag) {
-                textSend = ANSWER_RIGHT;
+                int count = wordsRepository.findCountWordRuByChatId(wordId) + 1;
+                if(count <= 5){
+                    wordsRepository.updateCountWordRuByChatId(count, wordId);
+                    textSend = ANSWER_RIGHT;
+                }else {
+                    textSend = ALL_DONE;
+                }
             } else {
                 textSend = ANSWER_WRONG;
             }
@@ -298,6 +337,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             case "nav" -> keyboard.navigationKeyboard(message);
             case "navShort" -> keyboard.navigationShortKeyboard(message);
             case "lang" -> keyboard.languageKeyboard(message);
+            case "count" -> keyboard.counterKeyboard(message);
         }
 
         try {

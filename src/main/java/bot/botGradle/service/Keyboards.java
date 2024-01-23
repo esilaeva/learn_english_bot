@@ -107,4 +107,25 @@ public class Keyboards {
 
         message.setReplyMarkup(markupInline);
     }
+
+    public void counterKeyboard(SendMessage message) {
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        var button1 = new InlineKeyboardButton();
+        button1.setText("Сбросить счетчики");
+        button1.setCallbackData(COUNT);
+
+        var button2 = new InlineKeyboardButton();
+        button2.setText("Вернуться в начало");
+        button2.setCallbackData(BACK);
+
+        rowInline.add(button1);
+        rowInline.add(button2);
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+
+        message.setReplyMarkup(markupInline);
+    }
 }

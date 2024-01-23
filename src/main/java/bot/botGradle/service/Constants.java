@@ -6,6 +6,7 @@ public class Constants {
     public static final String DICT = "dict";
     public static final String EN = "en";
     public static final String RU = "ru";
+    public static final String COUNT = "count";
     public static final String TRANSLATE = "translate";
     public static final String NEXT = "next";
     public static final String BACK = "back";
@@ -22,6 +23,7 @@ public class Constants {
     public static final String ANSWER_WRONG = "<b>Неверно :(</b>";
     public static final String WORD_IS_NOT_EXISTS = "Такого слова нет в словаре. Попробуй другое";
     public static final String FIND_WORD = "Напиши какое слово найти?";
+    public static final String ALL_DONE = "Все слова выучены";
 
 
 }
