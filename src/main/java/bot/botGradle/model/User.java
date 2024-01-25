@@ -18,6 +18,7 @@ public class User {
     private String userChoose;
     private String userLanguage;
     private String userLastWord;
+    private int userLastWordId;
     private Timestamp registeredAt;
 
 }

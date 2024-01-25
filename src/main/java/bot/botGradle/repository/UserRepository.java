@@ -30,4 +30,10 @@ public interface UserRepository extends CrudRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.chatId = :chatId")
     User findUserDataByChatId(long chatId);
 
+    @Modifying
+    @Transactional
+    @Query("UPDATE User u SET u.userLastWordId = :userLastWordId WHERE u.chatId = :chatId")
+    void updateUserLastWordIdByChatId(@Param("userLastWordId") int userLastWordId, @Param("chatId") Long chatId);
+
+
 }
