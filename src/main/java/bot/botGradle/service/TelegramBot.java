@@ -133,17 +133,19 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void dictFind(String str, long chatId) {
-        identifyLanguage(str);
+        identifyLanguage(str, chatId);
         findAllTranslates(str, chatId);
     }
 
-    private void identifyLanguage(String message) {
+    private void identifyLanguage(String message, long chatId) {
         Character.UnicodeBlock block = Character.UnicodeBlock.of(message.charAt(0));
         if (Character.UnicodeBlock.CYRILLIC.equals(block)) {
             language = RU;
+
         } else if (Character.UnicodeBlock.BASIC_LATIN.equals(block)) {
             language = EN;
         }
+        userRepository.updateUserLanguageByChatId(language, chatId);
     }
 
     private void findAllTranslates(String word, long chatId) {
@@ -170,7 +172,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void findRandomWord(long chatId) {
 
         language = userRepository.findUserDataByChatId(chatId).getUserLanguage();
-        String textSend;
+        String textSend, trans = "";
 
         if (language.equals(RU)) {
             Words text = wordsRepository.findRandomWordRu();
@@ -189,10 +191,12 @@ public class TelegramBot extends TelegramLongPollingBot {
             }else {
                 wordId = text.getId();
                 word = text.getWordEn();
+                trans = text.getTrans().equals("[]") ? "" : " " + text.getTrans();
             }
         }
         userRepository.updateUserLastWordByChatId(word, chatId);
-        textSend = "Твой вариант перевода слова <b>" + word + "</b>:";
+        userRepository.updateUserLastWordIdByChatId(wordId, chatId);
+        textSend = "Твой вариант перевода слова <b>" + word + trans + "</b>:";
 
         executeMessageText(textSend, chatId);
     }
@@ -208,12 +212,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (language.equals(EN)) {
             list = wordsRepository.findByWordRu(message.toLowerCase());
             for (Words w : list) {
-                if (w.getWordRu().equals(message.toLowerCase())) {
+                if (w.getWordEn().equals(word)) {
                     flag = true;
                     break;
                 }
             }
             if (flag) {
+                wordId = userRepository.findUserDataByChatId(chatId).getUserLastWordId();
                 int count = wordsRepository.findCountWordEnByChatId(wordId) + 1;
                 if(count <= 5){
                     wordsRepository.updateCountWordEnByChatId(count, wordId);
@@ -228,12 +233,13 @@ public class TelegramBot extends TelegramLongPollingBot {
         } else if (language.equals(RU)) {
             list = wordsRepository.findByWordEn(message.toLowerCase());
             for (Words w : list) {
-                if (w.getWordEn().equals(message.toLowerCase())) {
+                if (w.getWordRu().equals(word)) {
                     flag = true;
                     break;
                 }
             }
             if (flag) {
+                wordId = userRepository.findUserDataByChatId(chatId).getUserLastWordId();
                 int count = wordsRepository.findCountWordRuByChatId(wordId) + 1;
                 if(count <= 5){
                     wordsRepository.updateCountWordRuByChatId(count, wordId);
